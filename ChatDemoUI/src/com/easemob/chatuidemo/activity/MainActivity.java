@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -707,7 +708,14 @@ public class MainActivity extends BaseActivity implements EMEventListener {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			moveTaskToBack(false);
+//			moveTaskToBack(false);
+			new AlertDialog.Builder(MainActivity.this).setTitle("提示").setMessage("确定要退出吗？").setPositiveButton("取消", null).setNegativeButton("确定", new DialogInterface.OnClickListener() {
+				
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					finish();
+				}
+			}).show();
 			return true;
 		}
 		return super.onKeyDown(keyCode, event);
