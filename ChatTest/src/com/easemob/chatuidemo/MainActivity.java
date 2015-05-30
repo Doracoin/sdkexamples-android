@@ -5,6 +5,7 @@ import java.io.File;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -21,6 +22,7 @@ import com.easemob.chat.EMConversation;
 import com.easemob.chat.EMGroupManager;
 import com.easemob.chat.EMMessage;
 import com.easemob.chat.VoiceMessageBody;
+import com.easemob.chat.EMConversation.EMConversationType;
 import com.easemob.chat.EMMessage.ChatType;
 import com.easemob.chatuidemo.utils.CommonUtils;
 import com.easemob.util.VoiceRecorder;
@@ -32,7 +34,7 @@ public class MainActivity extends Activity {
 	/**录音类*/
 	private VoiceRecorder voiceRecorder;
 	/**要发送给的用户名*/
-	private String toChatUsername = "776146966";
+	private String toChatUsername = "916692273";
 	/***/
 	private EMConversation conversation;
 	
@@ -44,7 +46,9 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		context=this;
 		setContentView(R.layout.activity_main);
+		voiceRecorder=new VoiceRecorder(new Handler());
 		init();
 		login();
 	}
@@ -179,23 +183,35 @@ public class MainActivity extends Activity {
 			return;
 		}
 		try {
-			final EMMessage message = EMMessage.createSendMessage(EMMessage.Type.VOICE);
-			// 如果是群聊，设置chattype,默认是单聊
-//			if (chatType == CHATTYPE_GROUP){
-//				message.setChatType(ChatType.GroupChat);
-//				}else if(chatType == CHATTYPE_CHATROOM){
-				    message.setChatType(ChatType.ChatRoom);
-//				}
-			message.setReceipt(toChatUsername);
-			int len = Integer.parseInt(length);
-			VoiceMessageBody body = new VoiceMessageBody(new File(filePath), len);
+			conversation = EMChatManager.getInstance().getConversation(toChatUsername);
+			EMMessage message = EMMessage.createSendMessage(EMMessage.Type.VOICE);
+			//如果是群聊，设置chattype,默认是单聊
+//			message.setChatType(ChatType.GroupChat);
+			VoiceMessageBody body = new VoiceMessageBody(new File(filePath), Integer.parseInt(length));
 			message.addBody(body);
-
+			message.setReceipt(toChatUsername);
 			conversation.addMessage(message);
-//			adapter.refreshSelectLast();
-			setResult(RESULT_OK);
-			// send file
-			// sendVoiceSub(filePath, fileName, message);
+			EMChatManager.getInstance().sendMessage(message, new EMCallBack(){
+
+				@Override
+				public void onError(int arg0, String arg1) {
+					
+				}
+
+				@Override
+				public void onProgress(int arg0, String arg1) {
+					
+				}
+
+				@Override
+				public void onSuccess() {
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							Toast.makeText(context, "发送成功！", Toast.LENGTH_SHORT).show();
+						}
+					});
+				}});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
