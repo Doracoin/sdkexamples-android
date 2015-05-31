@@ -48,10 +48,17 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		context=this;
 		setContentView(R.layout.activity_main);
-		voiceRecorder=new VoiceRecorder(new Handler());
+		voiceRecorder=new VoiceRecorder(handler);
 		init();
 		login();
 	}
+	
+	/**此Handler用于更新界面，接受0-13十四个等级的音量大小*/
+	private Handler handler=new Handler(){
+		public void handleMessage(android.os.Message msg) {
+			System.out.println("The voice volum: "+msg.what);
+		};
+	};
 	
 	private void init(){
 		holdToRec=(Button) findViewById(R.id.hold_to_record);
@@ -146,8 +153,7 @@ public class MainActivity extends Activity {
 					try {
 						int length = voiceRecorder.stopRecoding();
 						if (length > 0) {
-							sendVoice(voiceRecorder.getVoiceFilePath(), voiceRecorder.getVoiceFileName(toChatUsername),
-									Integer.toString(length), false);
+							sendVoice(voiceRecorder.getVoiceFilePath(), length, false);
 						} else if (length == EMError.INVALID_FILE) {
 							Toast.makeText(getApplicationContext(), st1, Toast.LENGTH_SHORT).show();
 						} else {
@@ -178,7 +184,7 @@ public class MainActivity extends Activity {
 	 * @param length
 	 * @param isResend
 	 */
-	private void sendVoice(String filePath, String fileName, String length, boolean isResend) {
+	private void sendVoice(String filePath, int length, boolean isResend) {
 		if (!(new File(filePath).exists())) {
 			return;
 		}
@@ -187,7 +193,7 @@ public class MainActivity extends Activity {
 			EMMessage message = EMMessage.createSendMessage(EMMessage.Type.VOICE);
 			//如果是群聊，设置chattype,默认是单聊
 //			message.setChatType(ChatType.GroupChat);
-			VoiceMessageBody body = new VoiceMessageBody(new File(filePath), Integer.parseInt(length));
+			VoiceMessageBody body = new VoiceMessageBody(new File(filePath), length);
 			message.addBody(body);
 			message.setReceipt(toChatUsername);
 			conversation.addMessage(message);
