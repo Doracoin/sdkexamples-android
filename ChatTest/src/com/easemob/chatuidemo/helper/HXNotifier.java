@@ -9,7 +9,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from EaseMob Technologies.
  */
-package com.easemob.chatuidemo.controller;
+package com.easemob.chatuidemo.helper;
 
 import java.util.HashSet;
 import java.util.List;
@@ -358,10 +358,10 @@ public class HXNotifier {
     /**
      * 设置NotificationInfoProvider
      * 
-     * @param provider
+     * @param hxNotificationInfoProvider
      */
-    public void setNotificationInfoProvider(HXNotificationInfoProvider provider) {
-        notificationInfoProvider = provider;
+    public void setNotificationInfoProvider(HXNotifier.HXNotificationInfoProvider hxNotificationInfoProvider) {
+        notificationInfoProvider =  hxNotificationInfoProvider;
     }
 
     public interface HXNotificationInfoProvider {

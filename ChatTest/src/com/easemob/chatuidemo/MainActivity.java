@@ -3,7 +3,13 @@ package com.easemob.chatuidemo;
 import java.io.File;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -17,14 +23,18 @@ import android.widget.Toast;
 
 import com.easemob.EMCallBack;
 import com.easemob.EMError;
+import com.easemob.EMEventListener;
+import com.easemob.EMNotifierEvent;
+import com.easemob.chat.EMChat;
 import com.easemob.chat.EMChatManager;
 import com.easemob.chat.EMConversation;
 import com.easemob.chat.EMGroupManager;
 import com.easemob.chat.EMMessage;
-import com.easemob.chat.VoiceMessageBody;
-import com.easemob.chat.EMConversation.EMConversationType;
 import com.easemob.chat.EMMessage.ChatType;
+import com.easemob.chat.VoiceMessageBody;
+import com.easemob.chatuidemo.helper.HXSDKHelper;
 import com.easemob.chatuidemo.utils.CommonUtils;
+import com.easemob.util.EMLog;
 import com.easemob.util.VoiceRecorder;
 
 public class MainActivity extends Activity {
@@ -42,6 +52,12 @@ public class MainActivity extends Activity {
 	private String userName="776146966";
 	/**登录密码*/
 	private String password="776146966";
+	
+	/**用于播放语音消息*/
+	private MediaPlayer mediaPlayer = null;
+	
+	/**语音是否播放中*/
+	private boolean isPlaying=false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +67,14 @@ public class MainActivity extends Activity {
 		voiceRecorder=new VoiceRecorder(handler);
 		init();
 		login();
+//		registMessageReceiver();
+		registMessageListener();
+		EMChat.getInstance().setAppInited();//设置SDK以广播形式接收新消息
+//		EMChatManager.getInstance().getChatOptions().setShowNotificationInBackgroud(false);//
+		
+		AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+		audioManager.setMode(AudioManager.MODE_NORMAL);
+		audioManager.setSpeakerphoneOn(true);
 	}
 	
 	/**此Handler用于更新界面，接受0-13十四个等级的音量大小*/
@@ -66,6 +90,7 @@ public class MainActivity extends Activity {
 		recordingHint=(TextView) findViewById(R.id.recordingHint);
 	}
 	
+	/**登录*/
 	private void login(){
 		EMChatManager.getInstance().login(userName,password,new EMCallBack() {//回调
 			@Override
@@ -221,6 +246,181 @@ public class MainActivity extends Activity {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**注册接收消息*/
+	private void registMessageReceiver(){
+		NewMessageBroadcastReceiver msgReceiver =new NewMessageBroadcastReceiver();
+		IntentFilter intentFilter = new IntentFilter(EMChatManager.getInstance().getNewMessageBroadcastAction());
+		intentFilter.setPriority(3);
+		registerReceiver(msgReceiver, intentFilter);
+	}
+	
+	private class NewMessageBroadcastReceiver extends BroadcastReceiver{
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			//消息id
+	        String msgId = intent.getStringExtra("msgid");
+	        //发消息的人的username(userid)
+	        String msgFrom = intent.getStringExtra("from");
+	        //消息类型，文本，图片，语音消息等,这里返回的值为msg.type.ordinal()。
+	        //所以消息type实际为是enum类型
+	        int msgType = intent.getIntExtra("type", 0);
+	        Log.d("main", "new message id:" + msgId + " from:" + msgFrom + " type:" + msgType);
+	        //更方便的方法是通过msgId直接获取整个message
+	        EMMessage message = EMChatManager.getInstance().getMessage(msgId);
+	        switch(message.getType()){
+	        case VOICE://语音
+	        	VoiceMessageBody voiceBody=(VoiceMessageBody) message.getBody();
+	        	File file = new File(voiceBody.getLocalUrl());
+				if (file.exists() && file.isFile()){
+					playVoice(voiceBody.getLocalUrl());
+				}else{
+					EMLog.e("Play VoiceMessage", "file not exist");
+				}
+	        	break;
+			case CMD:
+				break;
+			case FILE://文件
+				break;
+			case IMAGE://图片
+				break;
+			case LOCATION://位置
+				break;
+			case TXT://文本
+				break;
+			case VIDEO://视频
+				break;
+			default:
+				break;
+	        }
+		}
+		
+	}
+	
+	/**接收消息事件*/
+	private void registMessageListener(){
+		//有选择性的接收某些类型event事件
+		EMChatManager.getInstance().registerEventListener(new EMEventListener() {
+					
+			@Override
+			public void onEvent(EMNotifierEvent event) {
+				// TODO Auto-generated method stub
+				EMMessage message = (EMMessage) event.getData();
+				switch(message.getType()){
+		        case VOICE://语音
+//		        	Toast.makeText(context, "收到语音消息。", Toast.LENGTH_SHORT).show();
+		        	Log.e("新消息接收----->", "收到语音消息.");
+		        	VoiceMessageBody voiceBody=(VoiceMessageBody) message.getBody();
+//		        	File file = new File(voiceBody.getLocalUrl());
+//					if (file.exists() && file.isFile()){
+		        	while(true){
+		        		if(message.status == EMMessage.Status.SUCCESS){
+		        			playVoice(voiceBody.getLocalUrl());
+		        			break;
+		        		}
+		        	}
+//					}else{
+//						EMLog.e("Play VoiceMessage", "file not exist");
+//					}
+		        	break;
+				case CMD:
+					break;
+				case FILE://文件
+					break;
+				case IMAGE://图片
+					break;
+				case LOCATION://位置
+					break;
+				case TXT://文本
+					break;
+				case VIDEO://视频
+					break;
+				default:
+					break;
+		        }
+			}
+			}, new EMNotifierEvent.Event[]{EMNotifierEvent.Event.EventNewMessage,}
+		);
+	}
+	
+	/**播放语音消息*/
+	public void playVoice(String filePath) {
+		if (!(new File(filePath).exists())) {
+			Log.e("PlayVoice----->", "file not exists\nfilepath: "+filePath);
+			return;
+		}
+//		((ChatActivity) activity).playMsgId = message.getMsgId();
+		
+		mediaPlayer = new MediaPlayer();
+//		if (HXSDKHelper.getInstance().getModel().getSettingMsgSpeaker()) {
+			mediaPlayer.setAudioStreamType(AudioManager.STREAM_RING);
+//		} else {
+//			audioManager.setSpeakerphoneOn(false);// 关闭扬声器
+//			// 把声音设定成Earpiece（听筒）出来，设定为正在通话中
+//			audioManager.setMode(AudioManager.MODE_IN_CALL);
+//			mediaPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
+//		}
+		try {
+			mediaPlayer.setDataSource(filePath);
+			mediaPlayer.prepare();
+			mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
+				@Override
+				public void onCompletion(MediaPlayer mp) {
+					// TODO Auto-generated method stub
+					mediaPlayer.release();
+					mediaPlayer = null;
+					stopPlayVoice(); // stop animation
+				}
+
+			});
+			isPlaying = true;
+//			currentPlayListener = this;
+			mediaPlayer.start();
+//			showAnimation();
+
+			// 如果是接收的消息
+//			if (message.direct == EMMessage.Direct.RECEIVE) {
+//				try {
+//					if (!message.isAcked) {
+//						message.isAcked = true;
+//						// 告知对方已读这条消息
+//						if (chatType != ChatType.GroupChat)
+//							EMChatManager.getInstance().ackMessageRead(message.getFrom(), message.getMsgId());
+//					}
+//				} catch (Exception e) {
+//					message.isAcked = false;
+//				}
+//				if (!message.isListened() && iv_read_status != null && iv_read_status.getVisibility() == View.VISIBLE) {
+//					// 隐藏自己未播放这条语音消息的标志
+//					iv_read_status.setVisibility(View.INVISIBLE);
+//					EMChatManager.getInstance().setMessageListened(message);
+//				}
+//
+//			}
+
+		} catch (Exception e) {
+			Log.e("语音播放 ----->", e.getMessage(),e);
+		}
+	}
+	
+	/**停止语音消息*/
+	public void stopPlayVoice() {
+//		voiceAnimation.stop();
+//		if (message.direct == EMMessage.Direct.RECEIVE) {
+//			voiceIconView.setImageResource(R.drawable.chatfrom_voice_playing);
+//		} else {
+//			voiceIconView.setImageResource(R.drawable.chatto_voice_playing);
+//		}
+		// stop play voice
+		if (mediaPlayer != null) {
+			mediaPlayer.stop();
+			mediaPlayer.release();
+		}
+		isPlaying = false;
+//		((ChatActivity) activity).playMsgId = null;
+//		adapter.notifyDataSetChanged();
 	}
 
 	@Override

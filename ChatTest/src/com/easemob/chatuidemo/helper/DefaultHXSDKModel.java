@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.easemob.chatuidemo.controller;
+package com.easemob.chatuidemo.helper;
 
 /**
  * UI Demo HX Model implementation
@@ -21,11 +21,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.easemob.chatuidemo.utils.HXPreferenceUtils;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+
+import com.easemob.chatuidemo.utils.HXPreferenceUtils;
 
 /**
  * HuanXin default SDK Model implementation
@@ -35,7 +35,7 @@ import android.preference.PreferenceManager;
 public class DefaultHXSDKModel extends HXSDKModel{
     private static final String PREF_USERNAME = "username";
     private static final String PREF_PWD = "pwd";
-//    UserDao dao = null;
+    UserDao dao = null;
     protected Context context = null;
     protected Map<Key,Object> valueCache = new HashMap<Key,Object>();
     
@@ -150,53 +150,53 @@ public class DefaultHXSDKModel extends HXSDKModel{
         return null;
     }
     
-//    public void setDisabledGroups(List<String> groups){
-//        if(dao == null){
-//            dao = new UserDao(context);
-//        }
-//        
-//        dao.setDisabledGroups(groups);
-//        valueCache.put(Key.DisabledGroups, groups);
-//    }
+    public void setDisabledGroups(List<String> groups){
+        if(dao == null){
+            dao = new UserDao(context);
+        }
+        
+        dao.setDisabledGroups(groups);
+        valueCache.put(Key.DisabledGroups, groups);
+    }
     
-//    public List<String> getDisabledGroups(){
-//        Object val = valueCache.get(Key.DisabledGroups);
-//
-//        if(dao == null){
-//            dao = new UserDao(context);
-//        }
-//        
-//        if(val == null){
-//            val = dao.getDisabledGroups();
-//            valueCache.put(Key.DisabledGroups, val);
-//        }
-//       
-//        return (List<String>) val;
-//    }
+    public List<String> getDisabledGroups(){
+        Object val = valueCache.get(Key.DisabledGroups);
+
+        if(dao == null){
+            dao = new UserDao(context);
+        }
+        
+        if(val == null){
+            val = dao.getDisabledGroups();
+            valueCache.put(Key.DisabledGroups, val);
+        }
+       
+        return (List<String>) val;
+    }
     
-//    public void setDisabledIds(List<String> ids){
-//        if(dao == null){
-//            dao = new UserDao(context);
-//        }
-//        
-//        dao.setDisabledIds(ids);
-//        valueCache.put(Key.DisabledIds, ids);
-//    }
+    public void setDisabledIds(List<String> ids){
+        if(dao == null){
+            dao = new UserDao(context);
+        }
+        
+        dao.setDisabledIds(ids);
+        valueCache.put(Key.DisabledIds, ids);
+    }
     
-//    public List<String> getDisabledIds(){
-//        Object val = valueCache.get(Key.DisabledIds);
-//        
-//        if(dao == null){
-//            dao = new UserDao(context);
-//        }
-//
-//        if(val == null){
-//            val = dao.getDisabledIds();
-//            valueCache.put(Key.DisabledIds, val);
-//        }
-//       
-//        return (List<String>) val;
-//    }
+    public List<String> getDisabledIds(){
+        Object val = valueCache.get(Key.DisabledIds);
+        
+        if(dao == null){
+            dao = new UserDao(context);
+        }
+
+        if(val == null){
+            val = dao.getDisabledIds();
+            valueCache.put(Key.DisabledIds, val);
+        }
+       
+        return (List<String>) val;
+    }
    
     public void allowChatroomOwnerLeave(boolean value){
         HXPreferenceUtils.getInstance().setSettingAllowChatroomOwnerLeave(value);

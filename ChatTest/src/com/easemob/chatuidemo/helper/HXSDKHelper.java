@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.easemob.chatuidemo.controller;
+package com.easemob.chatuidemo.helper;
 
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +28,7 @@ import com.easemob.chat.EMChat;
 import com.easemob.chat.EMChatConfig.EMEnvMode;
 import com.easemob.chat.EMChatManager;
 import com.easemob.chat.EMChatOptions;
-import com.easemob.chatuidemo.controller.HXNotifier.HXNotificationInfoProvider;
+import com.easemob.chatuidemo.helper.HXNotifier.HXNotificationInfoProvider;
 
 /**
  * The developer can derive from this class to talk with HuanXin SDK
